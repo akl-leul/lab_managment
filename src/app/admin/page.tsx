@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FaTools, FaUsers, FaCalendarAlt, FaBars, FaTrash, FaPencilAlt } from 'react-icons/fa';
+import { FaTools, FaUsers, FaCalendarAlt, FaBars } from 'react-icons/fa';
 import EquipmentForm from '@/components/EquipmentForm';
 import TailwindCalendar from '@/components/TailwindCalendar';
 import AdminTable from '@/components/AdminTable';

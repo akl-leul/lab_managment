@@ -30,7 +30,11 @@ export default function LoginPage() {
 
       // Login successful, redirect to /admin
       router.push('/admin');
-    } catch (error: any) {
+    } catch (error: unknown) {
+  if (error instanceof Error) {
+    console.error(error.message);
+  }
+} {
       console.error('Login error:', error);
       setError('Failed to fetch');
     }
