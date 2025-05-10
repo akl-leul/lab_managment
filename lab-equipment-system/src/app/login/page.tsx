@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { FaUserAlt, FaLock } from 'react-icons/fa';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -9,57 +10,78 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
     setError('');
 
-    const res = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
+    try {
+      const res = await fetch('/api/auth/login', {  // No trailing slash
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
 
-    if (res.ok) {
-      router.push('/admin');
-    } else {
       const data = await res.json();
-      setError(data.error || 'Login failed');
-    }
-  };
 
+      if (!res.ok) {
+        setError(data.error || 'Login failed');
+        return;
+      }
+
+      // Login successful, redirect to /admin
+      router.push('/admin');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      setError('Failed to fetch');
+    }
+  } 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-100 to-white">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-100 to-white px-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-lg shadow-md w-full max-w-md"
+        className="bg-white p-10 rounded-3xl shadow-lg max-w-md w-full"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center">Admin Login</h2>
+        <h2 className="text-3xl font-extrabold mb-8 text-center text-indigo-700 tracking-wide">
+          Admin Login
+        </h2>
 
         {error && (
-          <p className="mb-4 text-red-600 font-semibold text-center">{error}</p>
+          <p className="mb-6 text-center text-red-600 font-semibold animate-fade-in">
+            {error}
+          </p>
         )}
 
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-          className="w-full border rounded px-4 py-2 mb-4"
-          required
-        />
+        {/* Username input with icon */}
+        <div className="relative mb-6">
+          <FaUserAlt className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-400" />
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 border border-indigo-300 rounded-xl text-indigo-900 placeholder-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+            required
+            autoComplete="username"
+          />
+        </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          className="w-full border rounded px-4 py-2 mb-6"
-          required
-        />
+        {/* Password input with icon */}
+        <div className="relative mb-8">
+          <FaLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-400" />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 border border-indigo-300 rounded-xl text-indigo-900 placeholder-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+            required
+            autoComplete="current-password"
+          />
+        </div>
 
         <button
           type="submit"
-          className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition"
+          className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-semibold py-3 rounded-xl shadow-lg hover:brightness-110 transition"
         >
           Login
         </button>

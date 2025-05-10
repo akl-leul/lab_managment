@@ -1,15 +1,8 @@
-import { IronSessionOptions } from 'iron-session';
-
-export interface UserSession {
-  id: string;
-  username: string;
-  role: string;
-  profileImage?: string | null;
-}
+import type { IronSessionOptions } from 'iron-session';
 
 export const sessionOptions: IronSessionOptions = {
-  password: process.env.SECRET_COOKIE_PASSWORD as string,
-  cookieName: 'lab-equipment-session',
+  password: process.env.SECRET_COOKIE_PASSWORD as string, // must be 32+ chars
+  cookieName: 'app-session', // your cookie name
   cookieOptions: {
     secure: process.env.NODE_ENV === 'production',
   },

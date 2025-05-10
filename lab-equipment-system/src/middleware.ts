@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
+ 
 export async function middleware(req: NextRequest) {
-  if (req.nextUrl.pathname.startsWith('/admin') || req.nextUrl.pathname.startsWith('/profile')) {
+  if (req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/profile')) {
     const cookie = req.cookies.get('lab-equipment-session');
     if (!cookie) {
       const url = req.nextUrl.clone();
-      url.pathname = '/login';
+      url.pathname = '/admin';
       return NextResponse.redirect(url);
     }
   }
@@ -14,5 +14,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/profile/:path*'],
+  matcher: ['/login/:path*', '/profile/:path*'],
 };
