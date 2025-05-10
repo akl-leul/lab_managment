@@ -75,7 +75,7 @@ export default function AdminPage() {
   }, []);
 
   const canEdit = userRole === 'SUPER_ADMIN' || userRole === 'ADMIN';
-  const canDelete = true; // All users can delete
+  // const canDelete = true; // All users can delete
 
   // Equipment handlers
   const handleAdd = async (data: Omit<Equipment, 'id' | 'createdAt' | 'updatedAt'>) => {

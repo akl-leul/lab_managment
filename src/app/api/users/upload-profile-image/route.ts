@@ -3,7 +3,7 @@ import { getIronSession } from 'iron-session';
 import { sessionOptions } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { IncomingForm } from 'formidable';
-import fs from 'fs';
+// import fs from 'fs';
 import path from 'path';
 
 export const config = {
