@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
 import EquipmentCard from '@/components/EquipmentCard';
 import { FaSearch, FaUserShield, FaBars, FaTimes } from 'react-icons/fa';
+import AnnouncementList from '@/components/AnnouncementList';
 
 interface Equipment {
   id: string;
@@ -107,10 +108,10 @@ export default function Home() {
                   aria-label="Search equipment"
                 />
               </div>
-
+ 
               {/* Admin link */}
               <Link
-                href="/admin"
+                href="/SUPER_ADMIN"
                 className="flex items-center gap-2 px-7 py-3 text-sm rounded-lg bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 text-white font-semibold shadow-lg hover:brightness-110 transition whitespace-nowrap justify-center"
                 onClick={() => setNavOpen(false)} // close menu on link click
               >
@@ -136,7 +137,9 @@ export default function Home() {
               <EquipmentCard key={eq.id} equipment={eq} />
             ))}
           </div>
+
         )}
+        <AnnouncementList/>
       </main>
     </>
   );

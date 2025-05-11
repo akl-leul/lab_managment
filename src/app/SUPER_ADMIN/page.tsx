@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { FaTools, FaUsers, FaCalendarAlt, FaBars } from 'react-icons/fa';
 import EquipmentForm from '@/components/EquipmentForm';
 import TailwindCalendar from '@/components/TailwindCalendar';
+import AnnouncementForm from '@/components/ScheduleForm';
 import AdminTable from '@/components/AdminTable';
-
+import UserTable from '@/components/UserTable';
+import AnnouncementList from '@/components/AnnouncementList';
 
 // Toast component for pop-up error messages
 function Toast({ message, onClose }: { message: string; onClose: () => void }) {
@@ -16,6 +18,45 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   return (
     <div className="fixed top-6 right-6 z-50 bg-gradient-to-br from-red-600 to-pink-400 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in font-semibold">
       {message}
+    </div>
+  );
+}
+
+// Confirmation dialog for deletes
+function ConfirmDialog({
+  open,
+  title,
+  message,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-xl shadow-xl p-8 max-w-xs w-full">
+        <h2 className="text-lg font-bold mb-2">{title}</h2>
+        <p className="mb-6">{message}</p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -37,15 +78,62 @@ interface User {
   profileImage?: string | null;
 }
 
+interface Announcement {
+  id: string;
+  title: string;
+  message: string;
+  date: string;
+}
+
 export default function AdminPage() {
   const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  // FORCE SUPER_ADMIN FOR ALL USERS
   const [userRole, setUserRole] = useState<'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'>('SUPER_ADMIN');
   const [activeTab, setActiveTab] = useState<'equipment' | 'users' | 'calendar'>('equipment');
   const [toast, setToast] = useState<string | null>(null);
 
+  // For confirmation dialog
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState<{ type: 'equipment' | 'user' | 'announcement'; id: string } | null>(null);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
+
+  // State to hold announcements array
+  const [announcement, setAnnouncement] = useState<Announcement[]>([]);
+  const [canEdit, setCanEdit] = useState(false); // example permission state
+
+  // Fetch announcements on mount or via some effect
+  useEffect(() => {
+    async function fetchAnnouncements() {
+      const res = await fetch('/api/announcements');
+      if (res.ok) {
+        const data = await res.json();
+        // Assuming API returns array of announcements directly
+        setAnnouncement(data);
+      } else {
+        console.log('Failed to fetch announcements');
+      }
+    }
+    fetchAnnouncements();
+
+    // Example: set canEdit based on user role or logic
+    setCanEdit(true);
+  }, []);
+
+  // Dummy handlers (replace with your real implementations)
+  const handleUserUpdate = (updatedAnnouncement: Announcement) => {
+    console.log('Update announcement:', updatedAnnouncement);
+    // Implement update logic here
+  };
+
+  const setConfirmTargetHandler = (target: any) => {
+    setConfirmTarget(target);
+  };
+  const setConfirmOpenHandler = (open: boolean) => {
+    setConfirmOpen(open);
+  };
 
   // Close sidebar on click outside
   useEffect(() => {
@@ -69,13 +157,11 @@ export default function AdminPage() {
       .then(res => res.json())
       .then(data => setUsers(data.users || []));
 
-    fetch('/api/auth')
-      .then(res => res.json())
-      .then(data => setUserRole(data?.user?.role || 'VIEWER'));
+    // FORCE SUPER_ADMIN FOR ALL USERS
+    setUserRole('SUPER_ADMIN');
   }, []);
 
-  const canEdit = userRole === 'SUPER_ADMIN' || userRole === 'ADMIN';
-  // const canDelete = true; // All users can delete
+  const canEditPermission = userRole === 'SUPER_ADMIN' || userRole === 'ADMIN';
 
   // Equipment handlers
   const handleAdd = async (data: Omit<Equipment, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -113,24 +199,8 @@ export default function AdminPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this equipment?')) return;
-    setToast(null);
-    const res = await fetch(`/api/equipment?id=${id}`, {
-      method: 'DELETE',
-    });
-
-    if (res.ok) {
-      setEquipments(prev => prev.filter(eq => eq.id !== id));
-      setToast('Equipment deleted successfully!');
-    } else {
-      const err = await res.json().catch(() => ({}));
-      setToast(err?.error || 'Failed to delete equipment');
-    }
-  };
-
   // User handlers
-  const handleUserUpdate = async (id: string, username: string, password: string, role: User['role']) => {
+  const handleUserUpdateHandler = async (id: string, username: string, password: string, role: User['role']) => {
     setToast(null);
     const res = await fetch('/api/users', {
       method: 'PUT',
@@ -147,7 +217,7 @@ export default function AdminPage() {
     }
   };
 
-  // New: Add user handler
+  // Add user handler
   const handleUserAdd = async (data: { username: string; password: string; role: User['role'] }) => {
     setToast(null);
     const res = await fetch('/api/users', {
@@ -166,6 +236,42 @@ export default function AdminPage() {
     }
   };
 
+  // Centralized delete logic using the dialog
+  const handleConfirmDelete = async () => {
+    if (!confirmTarget) return;
+    setToast(null);
+    if (confirmTarget.type === 'equipment') {
+      const res = await fetch(`/api/equipment?id=${confirmTarget.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setEquipments(prev => prev.filter(eq => eq.id !== confirmTarget.id));
+        setToast('Equipment deleted successfully!');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setToast(err?.error || 'Failed to delete equipment');
+      }
+    } else if (confirmTarget.type === 'user') {
+      const res = await fetch(`/api/users?id=${confirmTarget.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setUsers(prev => prev.filter(u => u.id !== confirmTarget.id));
+        setToast('User deleted successfully!');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setToast(err?.error || 'Failed to delete user');
+      }
+    } else if (confirmTarget.type === 'announcement') {
+      const res = await fetch(`/api/announcements?id=${confirmTarget.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setAnnouncement(prev => prev.filter(a => a.id !== confirmTarget.id));
+        setToast('Announcement deleted successfully!');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setToast(err?.error || 'Failed to delete announcement');
+      }
+    }
+    setConfirmOpen(false);
+    setConfirmTarget(null);
+  };
+
   const handleTab = (tab: typeof activeTab) => {
     setActiveTab(tab);
     setSidebarOpen(false);
@@ -174,6 +280,22 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 flex relative font-sans overflow-x-hidden">
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Confirm Delete"
+        message={
+          confirmTarget?.type === 'equipment'
+            ? 'Are you sure you want to delete this equipment?'
+            : confirmTarget?.type === 'user'
+            ? 'Are you sure you want to delete this user?'
+            : 'Are you sure you want to delete this announcement?'
+        }
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setConfirmTarget(null);
+        }}
+      />
 
       {/* Floating sidebar toggle button (all devices) */}
       {!sidebarOpen && (
@@ -198,7 +320,6 @@ export default function AdminPage() {
         `}
         style={{ minWidth: '18rem' }}
       >
-        
         <h2 className="text-3xl font-extrabold cursor-pointer mb-10 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-purple-600 to-pink-500 drop-shadow-lg">
           Admin Panel
         </h2>
@@ -207,7 +328,7 @@ export default function AdminPage() {
             active={activeTab === 'equipment'}
             onClick={() => handleTab('equipment')}
             icon={<FaTools />}
-            label="Equipment" 
+            label="Equipment"
           />
           <SidebarButton
             active={activeTab === 'users'}
@@ -246,9 +367,12 @@ export default function AdminPage() {
                   <AdminTable
                     equipments={equipments}
                     onUpdate={handleUpdate}
-                    onDelete={handleDelete}
-                    canEdit={canEdit}
-                    canDelete={canEdit}
+                    onDelete={id => {
+                      setConfirmTarget({ type: 'equipment', id });
+                      setConfirmOpen(true);
+                    }}
+                    canEdit={canEditPermission}
+                    canDelete={canEditPermission}
                   />
                 </div>
               </div>
@@ -278,20 +402,47 @@ export default function AdminPage() {
               {/* Users Table */}
               <div className="flex-1">
                 <div className="bg-white/70 backdrop-blur-lg p-6 rounded-2xl shadow-xl border border-purple-100 overflow-x-auto">
-                  <UsersTable users={users} canEdit={canEdit} onUpdate={handleUserUpdate} />
+                  <UserTable
+                    users={users}
+                    canEdit={canEditPermission}
+                    canDelete={canEditPermission}
+                    onUpdate={handleUserUpdateHandler}
+                    onDelete={id => {
+                      setConfirmTarget({ type: 'user', id });
+                      setConfirmOpen(true);
+                    }}
+                  />
                 </div>
               </div>
             </div>
           </>
         )}
+
         {activeTab === 'calendar' && (
           <>
             <h1 className="text-4xl font-extrabold mb-8 text-pink-700 drop-shadow">
               Calendar
             </h1>
-            <div className="bg-white/80 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-pink-100">
-              <TailwindCalendar />
-            </div>
+            <main className="min-h-screen p-6 bg-gradient-to-br from-pink-50 to-pink-100">
+              <h1 className="text-4xl font-extrabold mb-6 text-pink-700 drop-shadow">Announcements</h1>
+              <div className='flex items-center justify-center  gap-20'>
+              
+              <AnnouncementList
+                announcement={announcement}
+                canEdit={canEdit}
+                canDelete={canEdit}
+                onUpdate={handleUserUpdate}
+                onDelete={id => {
+                  setConfirmTarget({ type: 'announcement', id });
+                  setConfirmOpen(true);
+                }}
+              />
+              <TailwindCalendar/>
+              </div>
+            </main>
+            <section className="bg-white rounded-2xl shadow-lg p-6 border border-pink-200 mt-8">
+              <AnnouncementForm />
+            </section>
           </>
         )}
       </section>
@@ -313,8 +464,7 @@ function SidebarButton({
 }) {
   return (
     <button
-      className={`
-        flex items-center gap-3 px-5 py-3 w-full rounded-xl text-lg font-semibold
+      className={`flex items-center gap-3 px-5 py-3 w-full rounded-xl text-lg font-semibold
         transition-all duration-300
         ${active
           ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-400 text-white shadow-lg scale-105'
@@ -335,7 +485,7 @@ function UserForm({
 }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<User['role']>('VIEWER');
+  const [role, setRole] = useState<User['role']>('SUPER_ADMIN');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -392,143 +542,17 @@ function UserForm({
         className="w-full border border-gray-300 rounded px-3 py-2"
         disabled={loading}
       >
-        <option value="VIEWER">Viewer</option>
-        <option value="ADMIN">Admin</option>
         <option value="SUPER_ADMIN">Super Admin</option>
+        <option value="ADMIN">Admin</option>
+        <option value="VIEWER">Viewer</option>
       </select>
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition disabled:opacity-50"
+        className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
       >
         {loading ? 'Adding...' : 'Add User'}
       </button>
     </form>
-  );
-}
-
-
-// UsersTable component for displaying and editing users
-function UsersTable({
-  users,
-  canEdit,
-  onUpdate,
-}: {
-  users: User[];
-  canEdit: boolean;
-  onUpdate: (id: string, username: string, password: string, role: User['role']) => void;
-}) {
-  const [editUserId, setEditUserId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<{ username: string; password: string; role: User['role'] }>({
-    username: '',
-    password: '',
-    role: 'VIEWER',
-  });
-
-  const startEdit = (user: User) => {
-    setEditUserId(user.id);
-    setFormData({
-      username: user.username,
-      password: '', // blank password means no change
-      role: user.role,
-    });
-  };
-
-  const cancelEdit = () => {
-    setEditUserId(null);
-    setFormData({ username: '', password: '', role: 'VIEWER' });
-  };
-
-  const saveEdit = () => {
-    if (!formData.username.trim()) {
-      alert('Username cannot be empty');
-      return;
-    }
-    onUpdate(editUserId!, formData.username.trim(), formData.password, formData.role);
-    cancelEdit();
-  };
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full border border-gray-300 rounded-xl shadow">
-        <thead className="bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100">
-          <tr>
-            <th className="border px-2 py-2">ID</th>
-            <th className="border px-2 py-2">Username</th>
-            <th className="border px-2 py-2">Password</th>
-            <th className="border px-2 py-2">Role</th>
-            <th className="border px-2 py-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map(user =>
-            editUserId === user.id ? (
-              <tr key={user.id} className="bg-blue-50">
-                <td className="border px-2 py-1 break-all">{user.id}</td>
-                <td className="border px-2 py-1">
-                  <input
-                    type="text"
-                    value={formData.username}
-                    onChange={e => setFormData(f => ({ ...f, username: e.target.value }))}
-                    className="border rounded px-1 py-0.5 w-full"
-                  />
-                </td>
-                <td className="border px-2 py-1">
-                  <input
-                    type="password"
-                    placeholder="New password (leave blank to keep)"
-                    value={formData.password}
-                    onChange={e => setFormData(f => ({ ...f, password: e.target.value }))}
-                    className="border rounded px-1 py-0.5 w-full"
-                  />
-                </td>
-                <td className="border px-2 py-1">
-                  <select
-                    value={formData.role}
-                    onChange={e => setFormData(f => ({ ...f, role: e.target.value as User['role'] }))}
-                    className="border rounded px-1 py-0.5 w-full"
-                  >
-                    <option value="SUPER_ADMIN">SUPER_ADMIN</option>
-                    <option value="ADMIN">ADMIN</option>
-                    <option value="VIEWER">VIEWER</option>
-                  </select>
-                </td>
-                <td className="border px-2 py-1 space-x-2">
-                  <button
-                    onClick={saveEdit}
-                    className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={cancelEdit}
-                    className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400 transition"
-                  >
-                    Cancel
-                  </button>
-                </td>
-              </tr>
-            ) : (
-              <tr key={user.id} className="hover:bg-blue-50 transition">
-                <td className="border px-2 py-1 break-all">{user.id}</td>
-                <td className="border px-2 py-1">{user.username}</td>
-                <td className="border px-2 py-1">••••••••</td>
-                <td className="border px-2 py-1">{user.role}</td>
-                <td className="border px-2 py-1 space-x-2">
-                  {canEdit && (
-                    <button
-                      onClick={() => startEdit(user)}
-                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
-                    >
-                      Edit
-                    </button>
-                  )}
-                </td>
-              </tr>
-            )
-          )}
-        </tbody>
-      </table>
-    </div>
   );
 }

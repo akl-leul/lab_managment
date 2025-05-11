@@ -54,23 +54,22 @@ export async function POST(req: Request) {
 
     const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
 
+    // Set cookie path to '/' so it's available everywhere
     const cookie = serialize('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      path: '/',
+      path: '/', // IMPORTANT: set to '/' not '/SUPER_ADMIN'
       maxAge: 7 * 24 * 60 * 60, // 7 days
       sameSite: 'lax',
     });
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       { message: 'Login successful', user: tokenPayload },
-      {
-        status: 200,
-        headers: {
-          'Set-Cookie': cookie,
-        },
-      }
+      { status: 200 }
     );
+    response.headers.set('Set-Cookie', cookie);
+
+    return response;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(

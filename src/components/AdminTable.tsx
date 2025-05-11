@@ -1,17 +1,18 @@
-// src/components/AdminTable.tsx
 'use client';
 
 import { Equipment } from '@prisma/client';
 import { useState } from 'react';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
 interface Props {
   equipments: Equipment[];
   onUpdate: (id: string, quantity: number, status: string) => void;
+  onDelete: (id: string) => void;       // New delete handler prop
   canEdit: boolean;
-  canDelete: boolean; // For future delete feature if needed
+  canDelete: boolean;                   // Control delete button visibility
 }
 
-export default function AdminTable({ equipments, onUpdate, canEdit }: Props) {
+export default function AdminTable({ equipments, onUpdate, canEdit, canDelete, onDelete }: Props) {
   const [editId, setEditId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState<number>(0);
   const [status, setStatus] = useState<string>('Available');
@@ -36,7 +37,9 @@ export default function AdminTable({ equipments, onUpdate, canEdit }: Props) {
           <th className="border border-gray-300 px-4 py-2 text-left">Name</th>
           <th className="border border-gray-300 px-4 py-2 text-left">Quantity</th>
           <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
-          {canEdit && <th className="border border-gray-300 px-4 py-2">Actions</th>}
+          {(canEdit || canDelete) && (
+            <th className="border border-gray-300 px-4 py-2 text-center">Actions</th>
+          )}
         </tr>
       </thead>
       <tbody>
@@ -72,30 +75,46 @@ export default function AdminTable({ equipments, onUpdate, canEdit }: Props) {
                 eq.status
               )}
             </td>
-            {canEdit && (
-              <td className="border border-gray-300 px-4 py-2">
+            {(canEdit || canDelete) && (
+              <td className="border border-gray-300 px-4 py-2 text-center">
                 {editId === eq.id ? (
                   <>
                     <button
                       onClick={saveEdit}
-                      className="mr-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                      className="mr-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 flex items-center justify-center"
+                      title="Save"
                     >
-                      Save
+                      <FaEdit className="mr-1" /> Save
                     </button>
                     <button
                       onClick={() => setEditId(null)}
                       className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400"
+                      title="Cancel"
                     >
                       Cancel
                     </button>
                   </>
                 ) : (
-                  <button
-                    onClick={() => startEdit(eq)}
-                    className="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700"
-                  >
-                    Edit
-                  </button>
+                  < div className='flex items-center justify-center w-full'>
+                    {canEdit && (
+                      <button
+                        onClick={() => startEdit(eq)}
+                        className="bg-indigo-600 text-white px-3 py-1 cursor-pointer w-[50%] rounded hover:bg-indigo-700 mr-2 flex items-center justify-center"
+                        title="Edit"
+                      >
+                        <FaEdit />EDIT
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => onDelete(eq.id)}
+                        className="bg-red-600 text-white px-3 py-1 cursor-pointer w-[50%] rounded hover:bg-red-700 flex items-center justify-center"
+                        title="Delete"
+                      >
+                        <FaTrash />DELETE
+                      </button>
+                    )}
+                  </div>
                 )}
               </td>
             )}

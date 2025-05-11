@@ -10,12 +10,12 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setError('');
 
     try {
-      const res = await fetch('/api/auth/login', {  // No trailing slash
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -28,34 +28,22 @@ export default function LoginPage() {
         return;
       }
 
-      // Login successful, redirect to /admin
-      router.push('/admin');
-    } catch (error: unknown) {
-  if (error instanceof Error) {
-    console.error(error.message);
-  }
-} {
-      console.error('Login error:', error);
-      setError('Failed to fetch');
+      // Redirect to admin page after successful login
+      router.push('/SUPER_ADMIN');
+    } catch (err) {
+      setError('Login failed. Please try again.');
     }
-  } 
+  }
+
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-100 to-white px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-10 rounded-3xl shadow-lg max-w-md w-full"
-      >
+      <form onSubmit={handleSubmit} className="bg-white p-10 rounded-3xl shadow-lg max-w-md w-full">
         <h2 className="text-3xl font-extrabold mb-8 text-center text-indigo-700 tracking-wide">
           Admin Login
         </h2>
 
-        {error && (
-          <p className="mb-6 text-center text-red-600 font-semibold animate-fade-in">
-            {error}
-          </p>
-        )}
+        {error && <p className="mb-6 text-center text-red-600 font-semibold">{error}</p>}
 
-        {/* Username input with icon */}
         <div className="relative mb-6">
           <FaUserAlt className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-400" />
           <input
@@ -69,7 +57,6 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* Password input with icon */}
         <div className="relative mb-8">
           <FaLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-400" />
           <input

@@ -1,21 +1,34 @@
+// src/app/api/auth/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { serialize } from 'cookie';
+
+const JWT_SECRET = process.env.JWT_SECRET!;
+if (!JWT_SECRET) throw new Error('JWT_SECRET is not set');
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const username = body.username?.trim();
-    const password = body.password?.trim();
+    const { username, password } = await req.json();
 
-    if (!username || !password) {
+    if (
+      typeof username !== 'string' ||
+      typeof password !== 'string' ||
+      !username.trim() ||
+      !password.trim()
+    ) {
       return NextResponse.json(
         { error: 'Username and password are required' },
         { status: 400 }
       );
     }
 
-    const user = await prisma.user.findUnique({ where: { username } });
+    const normalizedUsername = username.trim().toLowerCase();
+
+    const user = await prisma.user.findUnique({
+      where: { username: normalizedUsername },
+    });
 
     if (!user) {
       return NextResponse.json(
@@ -25,7 +38,6 @@ export async function POST(req: Request) {
     }
 
     const isValid = await bcrypt.compare(password, user.password);
-
     if (!isValid) {
       return NextResponse.json(
         { error: 'Invalid username or password' },
@@ -33,18 +45,32 @@ export async function POST(req: Request) {
       );
     }
 
-    // TODO: Set session cookie here - iron-session does not support Next.js 13 Request/Response directly
+    const tokenPayload = {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      profileImage: user.profileImage ?? null,
+    };
 
-    // Instead, respond with success and user info
-    return NextResponse.json({
-      message: 'Login successful',
-      user: {
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        profileImage: user.profileImage || null,
-      },
+    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
+
+    const cookie = serialize('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+      sameSite: 'lax',
     });
+
+    const response = NextResponse.json({
+      success: true,
+      redirectTo: '/SUPER_ADMIN',
+      user: tokenPayload,
+    });
+
+    response.headers.set('Set-Cookie', cookie);
+
+    return response;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(

@@ -1,18 +1,31 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
- 
+
+const SESSION_COOKIE_NAME = 'my-app-session'; // Update this to your actual session cookie name
+
 export async function middleware(req: NextRequest) {
-  if (req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/profile')) {
-    const cookie = req.cookies.get('lab-equipment-session');
-    if (!cookie) {
-      const url = req.nextUrl.clone();
-      url.pathname = '/admin';
-      return NextResponse.redirect(url);
+  const { pathname } = req.nextUrl;
+
+  // Protect /admin and /profile routes and all their subpaths
+  if (pathname.startsWith('/SUPfER_ADMIN') || pathname.startsWith('/profile')) {
+    const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME);
+
+    // If no session cookie, redirect to login with 'from' param
+    if (!sessionCookie) {
+      const loginUrl = req.nextUrl.clone();
+      loginUrl.pathname = '/ghf';
+      loginUrl.searchParams.set('from', pathname); // Pass original path for redirect after login
+      return NextResponse.redirect(loginUrl);
     }
+
+    // TODO: Optional - Add session validation here (e.g., verify cookie or JWT)
   }
+
+  // Allow request to continue if authenticated or route not protected
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/login/:path*', '/profile/:path*'],
+  // Apply middleware to /admin and /profile and all nested routes
+  matcher: ['/SUPERd_ADMIN/:path*', '/profile/:path*'],
 };
