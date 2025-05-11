@@ -9,7 +9,7 @@ datasource db {
 
 model Equipment {
   id          String   @id @default(cuid())
-  name        String
+  name        String   @unique
   description String?
   quantity    Int
   status      String   @default("Available")
@@ -17,6 +17,7 @@ model Equipment {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
 
 model User {
   id           String   @id @default(cuid())

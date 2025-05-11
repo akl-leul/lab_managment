@@ -28,6 +28,9 @@ export default function AnnouncementList({
 
   const renderedAnnouncements = useMemo(() => {
     return announcement.map(({ id, title, message, date }) => (
+      <div className='flex flex-col w-[98%]'>
+   
+
       <article
         key={id}
         className="p-4 bg-gray-800 rounded-lg border border-green-600 shadow-sm relative"
@@ -69,8 +72,10 @@ export default function AnnouncementList({
           </div>
         )}
       </article>
+      </div>
     ));
   }, [announcement, canEdit, canDelete, onUpdate, onDelete]);
 
   return <div className="max-w-3xl mx-auto space-y-6">{renderedAnnouncements}</div>;
+  
 }

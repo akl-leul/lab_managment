@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FaTools, FaUsers, FaCalendarAlt, FaBars } from 'react-icons/fa';
+import { FaTools, FaUsers, FaCalendarAlt, FaBars, FaUserPlus  } from 'react-icons/fa';
+ import { FaUser, FaLock, FaUserShield } from 'react-icons/fa';
 import EquipmentForm from '@/components/EquipmentForm';
 import TailwindCalendar from '@/components/TailwindCalendar';
 import AnnouncementForm from '@/components/ScheduleForm';
@@ -394,11 +395,14 @@ export default function AdminPage() {
             <div className="flex flex-col md:flex-row gap-8">
               {/* User Add Form */}
               <div className="md:w-1/3 w-full">
-                <div className="bg-white/70 backdrop-blur-lg p-6 rounded-2xl shadow-xl border border-purple-100 mb-6 md:mb-0">
-                  <h2 className="font-bold text-xl mb-4 text-purple-700">Add User</h2>
-                  <UserForm onAdd={handleUserAdd} />
-                </div>
-              </div>
+  <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl shadow-lg border border-purple-200 mb-6 md:mb-0 transition-shadow hover:shadow-purple-300">
+    <h2 className="flex items-center gap-3 font-extrabold text-2xl mb-6 text-purple-700">
+      <FaUserPlus className="text-purple-600" size={28} />
+      Add User
+    </h2>
+    <UserForm onAdd={handleUserAdd} />
+  </div>
+</div>
               {/* Users Table */}
               <div className="flex-1">
                 <div className="bg-white/70 backdrop-blur-lg p-6 rounded-2xl shadow-xl border border-purple-100 overflow-x-auto">
@@ -420,14 +424,20 @@ export default function AdminPage() {
 
         {activeTab === 'calendar' && (
           <>
-            <h1 className="text-4xl font-extrabold mb-8 text-pink-700 drop-shadow">
-              Calendar
-            </h1>
-            <main className="min-h-screen p-6 bg-gradient-to-br from-pink-50 to-pink-100">
-              <h1 className="text-4xl font-extrabold mb-6 text-pink-700 drop-shadow">Announcements</h1>
-              <div className='flex items-center justify-center  gap-20'>
-              
-              <AnnouncementList
+            
+  
+ 
+
+
+            <main className="min-h-screen w-full p-6 bg-gradient-to-br from-pink-50 to-pink-100 flex flex-col items-center justify-start">
+         
+
+              <div className='flex items-center justify-center flex-col md:flex-row  gap-1'>
+              <div className='flex items-start flex-col'>
+                 
+     <h1 className="text-2xl font-extrabold mb-6 bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-700 bg-clip-text text-transparent drop-shadow-lg">
+          Announcements
+      </h1><AnnouncementList
                 announcement={announcement}
                 canEdit={canEdit}
                 canDelete={canEdit}
@@ -437,12 +447,13 @@ export default function AdminPage() {
                   setConfirmOpen(true);
                 }}
               />
-              <TailwindCalendar/>
+              </div>
+              
+                
+              <TailwindCalendar/><AnnouncementForm />
               </div>
             </main>
-            <section className="bg-white rounded-2xl shadow-lg p-6 border border-pink-200 mt-8">
-              <AnnouncementForm />
-            </section>
+            
           </>
         )}
       </section>
@@ -512,47 +523,70 @@ function UserForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="text-red-600 font-semibold text-sm">
-          {error}
-        </div>
-      )}
-      <input
-        type="text"
-        placeholder="Username"
-        value={username}
-        onChange={e => setUsername(e.target.value)}
-        className="w-full border border-gray-300 rounded px-3 py-2"
-        required
-        disabled={loading}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-        className="w-full border border-gray-300 rounded px-3 py-2"
-        required
-        disabled={loading}
-      />
-      <select
-        value={role}
-        onChange={e => setRole(e.target.value as User['role'])}
-        className="w-full border border-gray-300 rounded px-3 py-2"
-        disabled={loading}
-      >
-        <option value="SUPER_ADMIN">Super Admin</option>
-        <option value="ADMIN">Admin</option>
-        <option value="VIEWER">Viewer</option>
-      </select>
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
-      >
-        {loading ? 'Adding...' : 'Add User'}
-      </button>
-    </form>
+   
+
+<form onSubmit={handleSubmit} className="space-y-6">
+  {error && (
+    <div className="text-red-600 font-semibold text-sm bg-red-100 border border-red-400 rounded px-4 py-2">
+      {error}
+    </div>
+  )}
+
+  {/* Username Input */}
+  <div className="relative">
+    <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+    <input
+      type="text"
+      placeholder="Username"
+      value={username}
+      onChange={e => setUsername(e.target.value)}
+      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:bg-gray-100 disabled:cursor-not-allowed"
+      required
+      disabled={loading}
+      aria-label="Username"
+    />
+  </div>
+
+  {/* Password Input */}
+  <div className="relative">
+    <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+    <input
+      type="password"
+      placeholder="Password"
+      value={password}
+      onChange={e => setPassword(e.target.value)}
+      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:bg-gray-100 disabled:cursor-not-allowed"
+      required
+      disabled={loading}
+      aria-label="Password"
+    />
+  </div>
+
+  {/* Role Select */}
+  <div className="relative">
+    <FaUserShield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+    <select
+      value={role}
+      onChange={e => setRole(e.target.value as User['role'])}
+      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:bg-gray-100 disabled:cursor-not-allowed"
+      disabled={loading}
+      aria-label="Select role"
+    >
+      <option value="SUPER_ADMIN">Super Admin</option>
+      <option value="ADMIN">Admin</option>
+      <option value="VIEWER">Viewer</option>
+    </select>
+  </div>
+
+  {/* Submit Button */}
+  <button
+    type="submit"
+    disabled={loading}
+    className="w-full bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600  text-white py-3 rounded-md font-semibold hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    {loading ? 'Adding...' : 'Add User'}
+  </button>
+</form>
+
   );
 }

@@ -2,24 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { prisma } from '@/lib/prisma';
-
-
-const PHYSICS_COLORS = {
-  background: 'bg-gray-900',
-  card: 'bg-gray-800',
-  textPrimary: 'text-cyan-400',
-  textSecondary: 'text-cyan-300',
-  hoverBg: 'hover:bg-cyan-700',
-  todayBg: 'bg-cyan-600',
-  todayText: 'text-white',
-  todayRing: 'ring-2 ring-cyan-400',
-  selectedBg: 'bg-green-600',
-  selectedText: 'text-white',
-  border: 'border-cyan-500',
-  announcementBg: 'bg-gray-800',
-  announcementBorder: 'border-green-600',
-  announcementText: 'text-green-400',
-};
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 export default function TailwindCalendar() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -98,69 +81,77 @@ export default function TailwindCalendar() {
     );
   }
 
-  return (
-    <div className={`${PHYSICS_COLORS.background} min-w-xl mx-auto p-6 rounded-lg shadow-lg text-white`}>
-      {/* Header: Month, Year and Navigation */}
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={prevMonth}
-          className={`px-3 py-1 rounded ${PHYSICS_COLORS.hoverBg} transition`}
-          aria-label="Previous Month"
-        >
-          &lt;
-        </button>
-        <h2 className={`text-3xl font-semibold ${PHYSICS_COLORS.textPrimary}`}>
-          {currentDate.toLocaleString('default', { month: 'long' })} {year}
-        </h2>
-        <button
-          onClick={nextMonth}
-          className={`px-3 py-1 rounded ${PHYSICS_COLORS.hoverBg} transition`}
-          aria-label="Next Month"
-        >
-          &gt;
-        </button>
-      </div>
-
-      {/* Weekday headers */}
-      <div className="grid grid-cols-7 text-center text-xs font-semibold uppercase tracking-wide mb-2 select-none">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className={`${PHYSICS_COLORS.textSecondary} py-2`}>
-            {day}
-          </div>
-        ))}
-      </div>
-
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-px rounded-lg overflow-hidden border border-cyan-700">
-        {calendarDays.map((day, idx) =>
-          day === null ? (
-            <div key={idx} className={`${PHYSICS_COLORS.card} h-24`} />
-          ) : (
-            <button
-              key={idx}
-              onClick={() => selectDate(day)}
-              className={`
-                relative h-24 p-2 cursor-pointer focus:outline-none
-                ${PHYSICS_COLORS.card}
-                ${isToday(day) ? `${PHYSICS_COLORS.todayBg} ${PHYSICS_COLORS.todayText} ${PHYSICS_COLORS.todayRing}` : ''}
-                ${isSelected(day) ? `${PHYSICS_COLORS.selectedBg} ${PHYSICS_COLORS.selectedText}` : ''}
-                hover:bg-cyan-700
-              `}
-              aria-label={`Day ${day}`}
-              type="button"
-            >
-              <time
-                dateTime={`${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`}
-                className="flex items-center justify-center w-7 h-7 rounded-full font-semibold"
-              >
-                {day}
-              </time>
-            </button>
-          )
-        )}
-      </div>
-
+  return ( 
+    <div className='flex w-full flex-col md:w-md items-start justify-items-start' >
+  <h1 className="text-2xl font-extrabold mb-6 text-emerald-600 drop-shadow-lg">
+  Calendar
+</h1>
+<div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 w-full max-w-sm mx-auto p-4 rounded-lg shadow-lg text-white">
+  {/* Header: Month, Year and Navigation */}
  
-    </div>
+  <div className="flex items-center justify-between mb-4">
+    <button
+      onClick={prevMonth}
+      className="p-2 rounded-full bg-blue-700 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+      aria-label="Previous Month"
+      type="button"
+    >
+      <FaChevronLeft size={16} />
+    </button>
+    <h2 className="text-xl font-semibold text-blue-300 select-none">
+      {currentDate.toLocaleString('default', { month: 'short' })} {year}
+    </h2>
+    <button
+      onClick={nextMonth}
+      className="p-2 rounded-full bg-blue-700 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+      aria-label="Next Month"
+      type="button"
+    >
+      <FaChevronRight size={16} />
+    </button>
+  </div>
+
+  {/* Weekday headers */}
+  <div className="grid grid-cols-7 text-center text-[10px] font-semibold uppercase tracking-wider mb-2 select-none text-blue-400">
+    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+      <div key={day} className="py-1">
+        {day}
+      </div>
+    ))}
+  </div>
+
+  {/* Calendar grid */}
+  <div className="grid grid-cols-7 gap-[1px] rounded-md overflow-hidden border border-blue-600 shadow-inner">
+    {calendarDays.map((day, idx) =>
+      day === null ? (
+        <div key={idx} className="bg-blue-800 h-16" />
+      ) : (
+        <button
+          key={idx}
+          onClick={() => selectDate(day)}
+          className={`
+            relative h-16 p-1 cursor-pointer focus:outline-none
+            bg-blue-800   
+            ${isToday(day) ? 'bg-gray-500 text-white ring-1 ring-blue-400 round' : ''}
+            ${isSelected(day) ? 'bg-indigo-600 text-white' : ''}
+            hover:bg-blue-600 transition flex items-start justify-start
+          `}
+          aria-label={`Day ${day}`}
+          type="button"
+        >
+          <time
+            dateTime={`${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`}
+            className="flex items-center justify-center w-6 h-6 rounded-full font-semibold mb-1 ml-1"
+          >
+            {day}
+          </time>
+        </button>
+      )
+    )}
+  </div>
+</div>
+
+</div>
+
   );
 }

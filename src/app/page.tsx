@@ -15,6 +15,8 @@ interface Equipment {
   category?: string;
 }
 
+const PAGE_SIZE = 6; // Number of items per page
+
 export default function Home() {
   const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [filtered, setFiltered] = useState<Equipment[]>([]);
@@ -22,30 +24,36 @@ export default function Home() {
   const [navOpen, setNavOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+
   useEffect(() => {
     fetch('/api/equipment')
       .then(res => res.json())
       .then(data => {
         setEquipments(data);
         setFiltered(data);
+        setCurrentPage(1); // reset page on new data load
       });
   }, []);
 
+  // Filter equipments by search term
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     if (!term) {
       setFiltered(equipments);
+      setCurrentPage(1);
       return;
     }
     const lower = term.toLowerCase();
-    setFiltered(
-      equipments.filter(
-        eq =>
-          eq.name.toLowerCase().includes(lower) ||
-          eq.description?.toLowerCase().includes(lower) ||
-          eq.category?.toLowerCase().includes(lower)
-      )
+    const filteredData = equipments.filter(
+      eq =>
+        eq.name.toLowerCase().includes(lower) ||
+        eq.description?.toLowerCase().includes(lower) ||
+        eq.category?.toLowerCase().includes(lower)
     );
+    setFiltered(filteredData);
+    setCurrentPage(1);
   };
 
   // Close nav when clicking outside (mobile)
@@ -59,6 +67,19 @@ export default function Home() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [navOpen]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const currentData = filtered.slice(startIndex, startIndex + PAGE_SIZE);
+
+  // Pagination handlers
+  const goToPage = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    // Scroll to top of equipment list on page change (optional)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <>
@@ -108,7 +129,7 @@ export default function Home() {
                   aria-label="Search equipment"
                 />
               </div>
- 
+
               {/* Admin link */}
               <Link
                 href="/SUPER_ADMIN"
@@ -124,22 +145,78 @@ export default function Home() {
       </nav>
 
       {/* Main content */}
-      <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-6 max-w-7xl mx-auto">
-        <h2 className="text-4xl font-extrabold text-blue-900 mb-8 font-['Inter'] drop-shadow-md">
-          Laboratory Equipment List
-        </h2>
+      <main className="min-h-screen overflow-x-hidden bg-gradient-to-b from-blue-50 to-white py-12 px-6 max-w-7xl mx-auto flex flex-col md:flex-row gap-12">
+        {/* Equipment List Section */}
+        <div className="mx-auto w-full md:w-3xl">
+          <h2 className="text-xl md:text-4xl font-extrabold text-blue-900 mb-8 font-['Inter'] drop-shadow-md">
+            Laboratory Equipment List
+          </h2>
 
-        {filtered.length === 0 ? (
-          <p className="text-gray-600 text-center mt-12 text-lg">No equipment found.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            {filtered.map(eq => (
-              <EquipmentCard key={eq.id} equipment={eq} />
-            ))}
-          </div>
+          {filtered.length === 0 ? (
+            <p className="text-gray-600 text-center mt-12 text-lg">No equipment found.</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 w-[80%] md:w-full md:grid-cols-3 gap-6 mt-8 mx-auto">
+                {currentData.map(eq => (
+                  <EquipmentCard key={eq.id} equipment={eq} />
+                ))}
+              </div>
 
-        )}
-        <AnnouncementList/>
+              {/* Pagination Controls */}
+              <div className="flex justify-center items-center gap-3 mt-8">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded border ${
+                    currentPage === 1
+                      ? 'cursor-not-allowed text-gray-400 border-gray-300'
+                      : 'hover:bg-blue-500 hover:text-white border-blue-500 text-blue-600'
+                  }`}
+                  aria-label="Previous page"
+                >
+                  Previous
+                </button>
+
+                {[...Array(totalPages)].map((_, i) => {
+                  const page = i + 1;
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      className={`px-3 py-1 rounded border ${
+                        page === currentPage
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'hover:bg-blue-100 border-gray-300 text-gray-700'
+                      }`}
+                      aria-current={page === currentPage ? 'page' : undefined}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded border ${
+                    currentPage === totalPages
+                      ? 'cursor-not-allowed text-gray-400 border-gray-300'
+                      : 'hover:bg-blue-500 hover:text-white border-blue-500 text-blue-600'
+                  }`}
+                  aria-label="Next page"
+                >
+                  Next
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Announcements Section */}
+        <div className="w-full md:w-96">
+          <h1 className="text-2xl font-extrabold mb-6 text-pink-700 drop-shadow">Announcements</h1>
+          <AnnouncementList />
+        </div>
       </main>
     </>
   );

@@ -4,6 +4,7 @@ import { getIronSession } from 'iron-session';
 import { cookies } from 'next/headers';
 import { sessionOptions } from '@/lib/session';
 
+
 export async function GET() {
   const equipments = await prisma.equipment.findMany({
     orderBy: { createdAt: 'desc' },
